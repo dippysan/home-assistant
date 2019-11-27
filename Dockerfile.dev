@@ -11,6 +11,11 @@ RUN apt-get update \
         libswresample-dev \
         libavfilter-dev \
         git \
+      openssh-server \
+      rsync \
+      sudo \
+      tmux \
+      vim \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -30,3 +35,10 @@ RUN pip3 install -r requirements_test.txt -c package_constraints.txt \
 
 # Set the default shell to bash instead of sh
 ENV SHELL /bin/bash
+
+RUN mkdir ~/.ssh && chmod 700 ~/.ssh
+COPY docker/authorized_keys /root/.ssh/authorized_keys
+COPY docker/.gitconfig /root/.gitconfig
+RUN chmod 600 ~/.ssh/authorized_keys
+RUN echo service ssh start >> /etc/bash.bashrc
+
