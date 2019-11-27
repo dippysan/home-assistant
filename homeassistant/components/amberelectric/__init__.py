@@ -1,0 +1,1 @@
+"""The amber electric component."""
