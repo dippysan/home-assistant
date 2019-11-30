@@ -1,0 +1,62 @@
+{
+  "data": {
+    "currentPriceKWH": 27.0,
+    "currentRenewableInGrid": 10.00,
+    "currentPriceColor": "red",
+    "currentPricePeriod": "2019-11-27T19:30:00Z",
+    "forecastPrices": [
+      {
+        "period": "2019-11-28T01:30:00Z",
+        "priceKWH": 25.0,
+        "renewableInGrid": 10.00,
+        "color": "yellow"
+      },
+      {
+        "period": "2019-11-28T02:00:00Z",
+        "priceKWH": 26.0,
+        "renewableInGrid": 8.00,
+        "color": "red"
+      },
+      {
+        "period": "2019-11-28T02:30:00Z",
+        "priceKWH": 24.0,
+        "renewableInGrid": 5.00,
+        "color": "yellow"
+      },
+      {
+        "period": "2019-11-28T03:00:00Z",
+        "priceKWH": 22.0,
+        "renewableInGrid": 5.00,
+        "color": "green"
+      },
+      {
+        "period": "2019-11-28T03:30:00Z",
+        "priceKWH": 22.0,
+        "renewableInGrid": 5.00,
+        "color": "green"
+      }
+    ],
+    "previousPrices": [
+      {
+        "period": "2019-11-26T21:30:00Z",
+        "priceKWH": 26.0,
+        "renewableInGrid": 7.00,
+        "color": "red"
+      },
+      {
+        "period": "2019-11-26T22:00:00Z",
+        "priceKWH": 24.0,
+        "renewableInGrid": 8.00,
+        "color": "yellow"
+      },
+      {
+        "period": "2019-11-26T22:30:00Z",
+        "priceKWH": 24.0,
+        "renewableInGrid": 8.00,
+        "color": "yellow"
+      }
+    ]
+  },
+  "serviceResponseType": 1,
+  "message": "Get price list successfully"
+}

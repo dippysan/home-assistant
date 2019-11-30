@@ -9,7 +9,6 @@ import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
-    CONF_MONITORED_CONDITIONS,
     ENERGY_KILO_WATT_HOUR,
     CONF_NAME,
     ATTR_ATTRIBUTION,
@@ -25,13 +24,13 @@ ATTR_SENSOR_ID = "sensor_id"
 
 ATTRIBUTION = "Data provided by Amber Electric"
 
-CONF_ID_TOKEN = "idtoken"
-CONF_REFRESH_TOKEN = "refreshtoken"
+CONF_ID_TOKEN = "id_token"
+CONF_REFRESH_TOKEN = "refresh_token"
 
 MIN_TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=60)
 
 SENSOR_TYPES = {
-    "currentPriceKWH": ["cents per kWh", ENERGY_KILO_WATT_HOUR],
+    "currentPriceKWH": ["Current Price kWh", ENERGY_KILO_WATT_HOUR],
 }
 
 
@@ -40,9 +39,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_NAME): cv.string,
         vol.Optional(CONF_ID_TOKEN): cv.string,
         vol.Optional(CONF_REFRESH_TOKEN): cv.string,
-        vol.Required(CONF_MONITORED_CONDITIONS, default=[]): vol.All(
-            cv.ensure_list, [vol.In(SENSOR_TYPES)]
-        ),
     }
 )
 
@@ -60,10 +56,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         return
 
     add_entities(
-        [
-            AmberCurrentSensor(amber_data, variable)
-            for variable in config[CONF_MONITORED_CONDITIONS]
-        ]
+        [AmberCurrentSensor(amber_data, variable) for variable in SENSOR_TYPES]
     )
 
 
@@ -175,7 +168,7 @@ class AmberCurrentData:
             # array is the latest date in the json
             self.last_updated = dt_util.as_utc(
                 datetime.datetime.strptime(
-                    str(self._data[0]["local_date_time_full"]), "%Y%m%d%H%M%S"
+                    str(self._data["currentPricePeriod"]), "%Y-%m-%dT%H:%M:%SZ"
                 )
             )
             return
