@@ -70,21 +70,76 @@ class TestAmberCurrentSensor(unittest.TestCase):
         with assert_setup_component(1, sensor.DOMAIN):
             assert setup_component(self.hass, sensor.DOMAIN, {"sensor": VALID_CONFIG})
 
-        fake_entities = [
-            "amber_current_price_kwh",
-        ]
-
-        for entity_id in fake_entities:
-            state = self.hass.states.get("sensor.{}".format(entity_id))
-            assert state is not None
+        state = self.hass.states.get("sensor.amberelectric")
+        assert state is not None
 
     @patch("requests.get", side_effect=mocked_requests)
-    def test_sensor_values(self, mock_get):
+    def test_sensor_attributes(self, mock_get):
         """Test retrieval of sensor values."""
         assert setup_component(self.hass, sensor.DOMAIN, {"sensor": VALID_CONFIG})
 
-        currentPrice = self.hass.states.get("sensor.amber_current_price_kwh").state
-        assert "27.0" == currentPrice
+        state = self.hass.states.get("sensor.amberelectric")
+        assert state is not None
+
+        assert dict(state.attributes) == {
+            "friendly_name": "AmberElectric",
+            "currentPriceKWH": 27.0,
+            "currentRenewableInGrid": 10.0,
+            "currentPriceColor": "red",
+            "currentPricePeriod": "2019-11-27T19:30:00Z",
+            "forecastPrices": [
+                {
+                    "period": "2019-11-28T01:30:00Z",
+                    "priceKWH": 25.0,
+                    "renewableInGrid": 10.00,
+                    "color": "yellow",
+                },
+                {
+                    "period": "2019-11-28T02:00:00Z",
+                    "priceKWH": 26.0,
+                    "renewableInGrid": 8.00,
+                    "color": "red",
+                },
+                {
+                    "period": "2019-11-28T02:30:00Z",
+                    "priceKWH": 24.0,
+                    "renewableInGrid": 5.00,
+                    "color": "yellow",
+                },
+                {
+                    "period": "2019-11-28T03:00:00Z",
+                    "priceKWH": 22.0,
+                    "renewableInGrid": 5.00,
+                    "color": "green",
+                },
+                {
+                    "period": "2019-11-28T03:30:00Z",
+                    "priceKWH": 22.0,
+                    "renewableInGrid": 5.00,
+                    "color": "green",
+                },
+            ],
+            "previousPrices": [
+                {
+                    "period": "2019-11-26T21:30:00Z",
+                    "priceKWH": 26.0,
+                    "renewableInGrid": 7.00,
+                    "color": "red",
+                },
+                {
+                    "period": "2019-11-26T22:00:00Z",
+                    "priceKWH": 24.0,
+                    "renewableInGrid": 8.00,
+                    "color": "yellow",
+                },
+                {
+                    "period": "2019-11-26T22:30:00Z",
+                    "priceKWH": 24.0,
+                    "renewableInGrid": 8.00,
+                    "color": "yellow",
+                },
+            ],
+        }
 
 
 class TestAmberCurrentData(unittest.TestCase):

@@ -8,11 +8,7 @@ import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
 from homeassistant.components.sensor import PLATFORM_SCHEMA
-from homeassistant.const import (
-    ENERGY_KILO_WATT_HOUR,
-    CONF_NAME,
-    ATTR_ATTRIBUTION,
-)
+from homeassistant.const import CONF_NAME
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import Throttle
 
@@ -28,11 +24,7 @@ CONF_ID_TOKEN = "id_token"
 CONF_REFRESH_TOKEN = "refresh_token"
 
 MIN_TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=60)
-
-SENSOR_TYPES = {
-    "currentPriceKWH": ["Current Price kWh", ENERGY_KILO_WATT_HOUR],
-}
-
+COLORS = ["red", "yellow", "green"]
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -55,44 +47,35 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         _LOGGER.error("Received error from Amber Electric: %s", err)
         return
 
-    add_entities(
-        [AmberCurrentSensor(amber_data, variable) for variable in SENSOR_TYPES]
-    )
+    add_entities([AmberCurrentSensor(amber_data)])
 
 
 class AmberCurrentSensor(Entity):
     """Implementation of an Amber Electric Current Price sensor."""
 
-    def __init__(self, amber_data, condition):
+    def __init__(self, amber_data):
         """Initialize the sensor."""
         self.amber_data = amber_data
-        self._condition = condition
+
+    @property
+    def attribution(self):
+        """Return the attribution."""
+        return ATTRIBUTION
 
     @property
     def name(self):
         """Return the name of the sensor."""
-        return "Amber {}".format(SENSOR_TYPES[self._condition][0])
+        return "AmberElectric"
+
+    @property
+    def state_attributes(self):
+        """Return the state attributes."""
+        return self.amber_data._data
 
     @property
     def state(self):
-        """Return the state of the sensor."""
-        return self.amber_data._data[self._condition]
-
-    @property
-    def device_state_attributes(self):
-        """Return the state attributes of the device."""
-        attr = {
-            ATTR_ATTRIBUTION: ATTRIBUTION,
-            ATTR_LAST_UPDATE: self.amber_data.last_updated,
-            ATTR_SENSOR_ID: self._condition,
-        }
-
-        return attr
-
-    @property
-    def unit_of_measurement(self):
-        """Return the units of measurement."""
-        return SENSOR_TYPES[self._condition][1]
+        """Return the current price."""
+        return self.amber_data._data["currentPriceKWH"]
 
     def update(self):
         """Update current conditions."""
