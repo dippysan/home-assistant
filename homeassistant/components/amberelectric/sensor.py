@@ -136,16 +136,16 @@ class AmberCurrentData:
             return
 
         try:
-            result = requests.get(
+            result = requests.post(
                 self._build_url(),
                 timeout=10,
+                data='{"headers":{"normalizedNames":{},"lazyUpdate":null,"headers":{}}}',
                 headers={
                     "refreshtoken": self._refresh_token,
                     "authorization": self._id_token,
                 },
-            ).json()
-            self._data = result["data"]
-            _LOGGER.debug("Amber Electric URL Result: %s", result)
+            )
+            self._data = result.json()["data"]
 
             # set lastupdate using self._data[0] as the first element in the
             # array is the latest date in the json
@@ -156,7 +156,9 @@ class AmberCurrentData:
             )
             return
 
-        except ValueError as err:
-            _LOGGER.error("Check Amber Electric %s", err.args)
+        except (KeyError, ValueError) as err:
+            template = "Amber Electric Error: type {0}. Arguments: {1!r}. Result: {2}"
+            message = template.format(type(err).__name__, err.args, result)
+            _LOGGER.error(message)
             self._data = None
             raise
