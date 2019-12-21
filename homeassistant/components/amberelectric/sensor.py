@@ -8,7 +8,11 @@ import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
 from homeassistant.components.sensor import PLATFORM_SCHEMA
-from homeassistant.const import CONF_NAME
+from homeassistant.const import (
+    CONF_PASSWORD,
+    CONF_USERNAME,
+    CONF_NAME,
+)
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import Throttle
 
@@ -20,26 +24,23 @@ ATTR_SENSOR_ID = "sensor_id"
 
 ATTRIBUTION = "Data provided by Amber Electric"
 
-CONF_ID_TOKEN = "id_token"
-CONF_REFRESH_TOKEN = "refresh_token"
-
 MIN_TIME_BETWEEN_UPDATES = datetime.timedelta(seconds=60)
 COLORS = ["red", "yellow", "green"]
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Optional(CONF_NAME): cv.string,
-        vol.Optional(CONF_ID_TOKEN): cv.string,
-        vol.Optional(CONF_REFRESH_TOKEN): cv.string,
+        vol.Required(CONF_USERNAME): cv.string,
+        vol.Required(CONF_PASSWORD): cv.string,
     }
 )
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the Amber Electric sensor."""
-    id_token, refresh_token = config.get(CONF_ID_TOKEN), config.get(CONF_REFRESH_TOKEN)
+    username, password = config.get(CONF_USERNAME), config.get(CONF_PASSWORD)
 
-    amber_data = AmberCurrentData(id_token, refresh_token)
+    amber_data = AmberCurrentData(username, password)
 
     try:
         amber_data.update()
@@ -75,7 +76,8 @@ class AmberCurrentSensor(Entity):
     @property
     def state(self):
         """Return the current price."""
-        return self.amber_data._data["currentPriceKWH"]
+        if self.amber_data._data:
+            return self.amber_data._data["currentPriceKWH"]
 
     def update(self):
         """Update current conditions."""
@@ -85,16 +87,17 @@ class AmberCurrentSensor(Entity):
 class AmberCurrentData:
     """Get data from Amber Electric."""
 
-    def __init__(self, id_token, refresh_token):
+    def __init__(self, username, password):
         """Initialize the data object."""
-        self._id_token = id_token
-        self._refresh_token = refresh_token
+        self._username = username
+        self._password = password
+        self._id_token = None
+        self._refresh_token = None
         self._data = None
         self.last_updated = None
 
     def _build_url(self):
         """Build the URL for the requests."""
-        _LOGGER.debug("Amber Electric URL: %s", _RESOURCE)
         return _RESOURCE
 
     @property
@@ -103,6 +106,43 @@ class AmberCurrentData:
         if self._data:
             return self._data
         return None
+
+    def _authorize(self):
+        try:
+            if self._username is None:
+                # Previously couldn't login, so don't try again
+                return
+
+            payload = {"username": self._username, "password": self._password}
+            result = requests.post(
+                "https://api-bff.amberelectric.com.au/api/v1.0/Authentication/SignIn",
+                timeout=10,
+                data=payload,
+                headers={"content-type": "application/json"},
+            )
+            _LOGGER.debug("Amber Electric Payload: %s", payload)
+            _LOGGER.debug("Amber Electric Result %s", result)
+            result_json = result.json()
+            if result_json["message"] != "Authentication successfully.":
+                _LOGGER.debug(
+                    "Amber Electric Login Error Message: %s", result_json["message"]
+                )
+                # Can't login
+                self._id_token = None
+                self._username = None
+                return
+
+            tokens = result_json["data"]
+            self._id_token = tokens["idToken"]
+            self._refresh_token = tokens["refreshToken"]
+            return
+
+        except (KeyError, ValueError) as err:
+            template = "Amber Electric Error: type {0}. Arguments: {1!r}. Result: {2}"
+            message = template.format(type(err).__name__, err.args, result)
+            _LOGGER.error(message)
+            self._data = None
+            raise
 
     def should_update(self):
         """Determine whether an update should occur.
@@ -135,17 +175,32 @@ class AmberCurrentData:
             )
             return
 
+        if self._id_token is None:
+            self._authorize()
+
+        if self._id_token is None:
+            # Can't initialize
+            return
+
         try:
             result = requests.post(
                 self._build_url(),
                 timeout=10,
-                data='{"headers":{"normalizedNames":{},"lazyUpdate":null,"headers":{}}}',
+                data="",
                 headers={
                     "refreshtoken": self._refresh_token,
                     "authorization": self._id_token,
                 },
             )
-            self._data = result.json()["data"]
+            result_json = result.json()
+
+            _LOGGER.debug("Amber Electric Data Return: %s", result.json())
+            if result_json == "Token is not valid":
+                # Wipe token so can reauth next time
+                self._id_token = None
+                return
+
+            self._data = result_json["data"]
 
             # set lastupdate using self._data[0] as the first element in the
             # array is the latest date in the json

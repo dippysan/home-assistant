@@ -1,0 +1,13 @@
+{
+    "data": {
+        "name": "Customer Name",
+        "firstName": null,
+        "lastName": null,
+        "postcode": "3000",
+        "email": "customer@email.com.au",
+        "idToken": "invalid_token",
+        "refreshToken": "refresh_invalid_token"
+    },
+    "serviceResponseType": 1,
+    "message": "Authentication successfully."
+}
