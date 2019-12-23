@@ -117,7 +117,7 @@ class AmberCurrentData:
             result = requests.post(
                 "https://api-bff.amberelectric.com.au/api/v1.0/Authentication/SignIn",
                 timeout=10,
-                data=payload,
+                json=payload,
                 headers={"content-type": "application/json"},
             )
             _LOGGER.debug("Amber Electric Payload: %s", payload)

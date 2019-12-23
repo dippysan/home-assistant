@@ -67,8 +67,8 @@ def mocked_requests(*args, **kwargs):
     # Happy path
     if (
         re.match(r".*?SignIn", url.path)
-        and kwargs["data"]["username"] == "user"
-        and kwargs["data"]["password"] == "pass"
+        and kwargs["json"]["username"] == "user"
+        and kwargs["json"]["password"] == "pass"
     ):
         return MockResponse(json.loads(load_fixture("amberelectric_signin.json")), 200)
     if (
@@ -81,8 +81,8 @@ def mocked_requests(*args, **kwargs):
     # Login with invalid user/pass
     if (
         re.match(r".*?SignIn", url.path)
-        and kwargs["data"]["username"] == "invaliduser"
-        and kwargs["data"]["password"] == "pass"
+        and kwargs["json"]["username"] == "invaliduser"
+        and kwargs["json"]["password"] == "pass"
     ):
         return MockResponse(
             json.loads(load_fixture("amberelectric_invalid_username.json")), 200
@@ -91,8 +91,8 @@ def mocked_requests(*args, **kwargs):
     # Simulate token invalid
     if (
         re.match(r".*?SignIn", url.path)
-        and kwargs["data"]["username"] == "invalidtoken"
-        and kwargs["data"]["password"] == "pass"
+        and kwargs["json"]["username"] == "invalidtoken"
+        and kwargs["json"]["password"] == "pass"
     ):
         # Initially returns refresh_invalid_token to force a "Token is not valid" message, then normal data from then on
         if times_invalid_signin_called == 0:
